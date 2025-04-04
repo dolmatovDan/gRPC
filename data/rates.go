@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -34,8 +33,8 @@ func (e *ExchangeRates) getRates() error {
 
 	req, err := http.NewRequest("GET", "https://www.cbr.ru/scripts/XML_daily.asp", nil)
 	if err != nil {
-		fmt.Printf("Ошибка создания запроса: %v\n", err)
-		os.Exit(1)
+		e.log.Error("Failed request")
+		return err
 	}
 
 	// avoid problems with security
