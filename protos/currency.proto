@@ -8,7 +8,7 @@ message RateRequest {
   Currencies Destination = 2;
 }
 
-message RateResponse { float rate = 1; }
+message RateResponse { double rate = 1; }
 
 // all currencies
 enum Currencies {
