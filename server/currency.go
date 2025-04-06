@@ -29,3 +29,7 @@ func (c *Currency) GetRate(ctx context.Context, rr *currency.RateRequest) (*curr
 func NewCurrency(r *data.ExchangeRates,l hclog.Logger) *Currency {
 	return &Currency{r, l, currency.UnimplementedCurrencyServer{}}
 }
+
+func (c*Currency) SubscribeRates(protos Currency_SubscribeRatesServer) {
+
+}
