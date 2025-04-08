@@ -13,8 +13,9 @@ import (
 )
 
 type Currency struct {
-	rates *data.ExchangeRates
-	log   hclog.Logger
+	rates         *data.ExchangeRates
+	log           hclog.Logger
+	subscriptions map[currency.Currency_SubscribeRatesServer][]*currency.RateRequest
 	currency.UnimplementedCurrencyServer
 }
 
@@ -26,37 +27,65 @@ func (c *Currency) GetRate(ctx context.Context, rr *currency.RateRequest) (*curr
 		return nil, err
 	}
 
-	return &currency.RateResponse{Rate: rate}, nil
+	return &currency.RateResponse{Rate: rate, Base: rr.Base, Destination: rr.Destination}, nil
 }
 
 func NewCurrency(r *data.ExchangeRates, l hclog.Logger) *Currency {
-	return &Currency{r, l, currency.UnimplementedCurrencyServer{}}
+	c := &Currency{r, l, make(map[currency.Currency_SubscribeRatesServer][]*currency.RateRequest), currency.UnimplementedCurrencyServer{}}
+	go c.handleUpdates()
+
+	return c
+}
+
+func (c *Currency) handleUpdates() {
+	ru := c.rates.MonitorRates(5 * time.Second)
+	
+	for range ru {
+		c.log.Info("Get updated rates")
+
+		// loop over subscribed clients
+		for k, v := range c.subscriptions {
+
+			// loop over rates
+			for _, rr := range v {
+				rate, err := c.rates.GetRate(rr.Base.String(), rr.Destination.String())
+				if err != nil {
+					c.log.Error("Unable to get updated rate", "base", rr.GetBase().String(), "destination", rr.GetDestination().String())
+					return
+				}
+
+				err = k.Send(&currency.RateResponse{Base: rr.Base, Destination: rr.Destination, Rate: rate})
+				if err != nil {
+					c.log.Error("Unable to send updated rate", "base", rr.GetBase().String(), "destination", rr.GetDestination().String())
+					return
+				}
+			}
+		}
+	}
 }
 
 func (c *Currency) SubscribeRates(src grpc.BidiStreamingServer[currency.RateRequest, currency.RateResponse]) error {
 
-	go func() {
-		for {
-			rr, err := src.Recv()
-			if err == io.EOF {
-				c.log.Info("Clieant has closed connection")
-				break
-			}
-			if err != nil {
-				c.log.Error("Unable to read from client", "error", err)
-				break
-			}
-
-			c.log.Info("Handle client request", "request", rr)
-		}
-	}()
-
 	for {
-		err := src.Send(&currency.RateResponse{Rate: 12.1})
+		rr, err := src.Recv()
+		if err == io.EOF {
+			c.log.Info("Clieant has closed connection")
+			break
+		}
 		if err != nil {
+			c.log.Error("Unable to read from client", "error", err)
 			return err
 		}
 
-		time.Sleep(5 * time.Second)
+		c.log.Info("Handle client request", "request", rr)
+		rrs, ok := c.subscriptions[src]
+		if !ok {
+			rrs = []*currency.RateRequest{}
+		}
+
+		rrs = append(rrs, rr)
+		c.subscriptions[src] = rrs
 	}
+
+	return nil
 }
