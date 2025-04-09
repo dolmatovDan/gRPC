@@ -7,6 +7,7 @@
 package currency
 
 import (
+	status "google.golang.org/genproto/googleapis/rpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -273,18 +274,104 @@ func (x *RateResponse) GetRate() float64 {
 	return 0
 }
 
+type StreamingRateResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Message:
+	//
+	//	*StreamingRateResponse_RateResponse
+	//	*StreamingRateResponse_Error
+	Message       isStreamingRateResponse_Message `protobuf_oneof:"message"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamingRateResponse) Reset() {
+	*x = StreamingRateResponse{}
+	mi := &file_currency_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamingRateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamingRateResponse) ProtoMessage() {}
+
+func (x *StreamingRateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_currency_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamingRateResponse.ProtoReflect.Descriptor instead.
+func (*StreamingRateResponse) Descriptor() ([]byte, []int) {
+	return file_currency_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *StreamingRateResponse) GetMessage() isStreamingRateResponse_Message {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+func (x *StreamingRateResponse) GetRateResponse() *RateResponse {
+	if x != nil {
+		if x, ok := x.Message.(*StreamingRateResponse_RateResponse); ok {
+			return x.RateResponse
+		}
+	}
+	return nil
+}
+
+func (x *StreamingRateResponse) GetError() *status.Status {
+	if x != nil {
+		if x, ok := x.Message.(*StreamingRateResponse_Error); ok {
+			return x.Error
+		}
+	}
+	return nil
+}
+
+type isStreamingRateResponse_Message interface {
+	isStreamingRateResponse_Message()
+}
+
+type StreamingRateResponse_RateResponse struct {
+	RateResponse *RateResponse `protobuf:"bytes,1,opt,name=rate_response,json=rateResponse,proto3,oneof"`
+}
+
+type StreamingRateResponse_Error struct {
+	Error *status.Status `protobuf:"bytes,2,opt,name=error,proto3,oneof"`
+}
+
+func (*StreamingRateResponse_RateResponse) isStreamingRateResponse_Message() {}
+
+func (*StreamingRateResponse_Error) isStreamingRateResponse_Message() {}
+
 var File_currency_proto protoreflect.FileDescriptor
 
 const file_currency_proto_rawDesc = "" +
 	"\n" +
-	"\x0ecurrency.proto\"]\n" +
+	"\x0ecurrency.proto\x1a\x17google/rpc/status.proto\"]\n" +
 	"\vRateRequest\x12\x1f\n" +
 	"\x04Base\x18\x01 \x01(\x0e2\v.CurrenciesR\x04Base\x12-\n" +
 	"\vDestination\x18\x02 \x01(\x0e2\v.CurrenciesR\vDestination\"r\n" +
 	"\fRateResponse\x12\x1f\n" +
 	"\x04Base\x18\x01 \x01(\x0e2\v.CurrenciesR\x04Base\x12-\n" +
 	"\vDestination\x18\x02 \x01(\x0e2\v.CurrenciesR\vDestination\x12\x12\n" +
-	"\x04rate\x18\x03 \x01(\x01R\x04rate*\xb5\x02\n" +
+	"\x04rate\x18\x03 \x01(\x01R\x04rate\"\x84\x01\n" +
+	"\x15StreamingRateResponse\x124\n" +
+	"\rrate_response\x18\x01 \x01(\v2\r.RateResponseH\x00R\frateResponse\x12*\n" +
+	"\x05error\x18\x02 \x01(\v2\x12.google.rpc.StatusH\x00R\x05errorB\t\n" +
+	"\amessage*\xb5\x02\n" +
 	"\n" +
 	"Currencies\x12\a\n" +
 	"\x03EUR\x10\x00\x12\a\n" +
@@ -320,10 +407,10 @@ const file_currency_proto_rawDesc = "" +
 	"\x03PHP\x10\x1d\x12\a\n" +
 	"\x03SGD\x10\x1e\x12\a\n" +
 	"\x03THB\x10\x1f\x12\a\n" +
-	"\x03ZAR\x10 2e\n" +
+	"\x03ZAR\x10 2n\n" +
 	"\bCurrency\x12&\n" +
-	"\aGetRate\x12\f.RateRequest\x1a\r.RateResponse\x121\n" +
-	"\x0eSubscribeRates\x12\f.RateRequest\x1a\r.RateResponse(\x010\x01B\vZ\t/currencyb\x06proto3"
+	"\aGetRate\x12\f.RateRequest\x1a\r.RateResponse\x12:\n" +
+	"\x0eSubscribeRates\x12\f.RateRequest\x1a\x16.StreamingRateResponse(\x010\x01B\vZ\t/currencyb\x06proto3"
 
 var (
 	file_currency_proto_rawDescOnce sync.Once
@@ -338,26 +425,30 @@ func file_currency_proto_rawDescGZIP() []byte {
 }
 
 var file_currency_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_currency_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_currency_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_currency_proto_goTypes = []any{
-	(Currencies)(0),      // 0: Currencies
-	(*RateRequest)(nil),  // 1: RateRequest
-	(*RateResponse)(nil), // 2: RateResponse
+	(Currencies)(0),               // 0: Currencies
+	(*RateRequest)(nil),           // 1: RateRequest
+	(*RateResponse)(nil),          // 2: RateResponse
+	(*StreamingRateResponse)(nil), // 3: StreamingRateResponse
+	(*status.Status)(nil),         // 4: google.rpc.Status
 }
 var file_currency_proto_depIdxs = []int32{
 	0, // 0: RateRequest.Base:type_name -> Currencies
 	0, // 1: RateRequest.Destination:type_name -> Currencies
 	0, // 2: RateResponse.Base:type_name -> Currencies
 	0, // 3: RateResponse.Destination:type_name -> Currencies
-	1, // 4: Currency.GetRate:input_type -> RateRequest
-	1, // 5: Currency.SubscribeRates:input_type -> RateRequest
-	2, // 6: Currency.GetRate:output_type -> RateResponse
-	2, // 7: Currency.SubscribeRates:output_type -> RateResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	2, // 4: StreamingRateResponse.rate_response:type_name -> RateResponse
+	4, // 5: StreamingRateResponse.error:type_name -> google.rpc.Status
+	1, // 6: Currency.GetRate:input_type -> RateRequest
+	1, // 7: Currency.SubscribeRates:input_type -> RateRequest
+	2, // 8: Currency.GetRate:output_type -> RateResponse
+	3, // 9: Currency.SubscribeRates:output_type -> StreamingRateResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_currency_proto_init() }
@@ -365,13 +456,17 @@ func file_currency_proto_init() {
 	if File_currency_proto != nil {
 		return
 	}
+	file_currency_proto_msgTypes[2].OneofWrappers = []any{
+		(*StreamingRateResponse_RateResponse)(nil),
+		(*StreamingRateResponse_Error)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_currency_proto_rawDesc), len(file_currency_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

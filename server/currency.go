@@ -7,7 +7,6 @@ import (
 
 	"github.com/dolmatovDan/gRPC/currency"
 	"github.com/dolmatovDan/gRPC/data"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -72,7 +71,12 @@ func (c *Currency) handleUpdates() {
 					return
 				}
 
-				err = k.Send(&currency.RateResponse{Base: rr.Base, Destination: rr.Destination, Rate: rate})
+				err = k.Send(&currency.StreamingRateResponse{
+					Message: &currency.StreamingRateResponse_RateResponse{
+						RateResponse: &currency.RateResponse{Base: rr.Base, Destination: rr.Destination, Rate: rate},
+					},
+				})
+
 				if err != nil {
 					c.log.Error("Unable to send updated rate", "base", rr.GetBase().String(), "destination", rr.GetDestination().String())
 					return
@@ -82,7 +86,7 @@ func (c *Currency) handleUpdates() {
 	}
 }
 
-func (c *Currency) SubscribeRates(src grpc.BidiStreamingServer[currency.RateRequest, currency.RateResponse]) error {
+func (c *Currency) SubscribeRates(src currency.Currency_SubscribeRatesServer) error {
 
 	for {
 		rr, err := src.Recv()
@@ -101,6 +105,30 @@ func (c *Currency) SubscribeRates(src grpc.BidiStreamingServer[currency.RateRequ
 			rrs = []*currency.RateRequest{}
 		}
 
+		var validationErr *status.Status
+		for _, v := range rrs {
+			if v.Base == rr.Base && v.Destination == rr.Destination {
+				validationErr := status.Newf(codes.AlreadyExists,
+					"Unable to subscribe for currency as subscription already exists",
+				)
+				validationErr, err := validationErr.WithDetails(rr)
+				if err != nil {
+					c.log.Error("Unable to add metadata to error", "error", err)
+					break
+				}
+				break
+			}
+		}
+		if validationErr != nil {
+			src.Send(&currency.StreamingRateResponse{
+				Message: &currency.StreamingRateResponse_Error{
+					Error: validationErr.Proto(),
+				},
+			})
+			continue
+		}
+
+		// all ok
 		rrs = append(rrs, rr)
 		c.subscriptions[src] = rrs
 	}
