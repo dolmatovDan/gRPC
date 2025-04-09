@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/hashicorp/go-hclog v1.6.3
 	golang.org/x/text v0.21.0
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.5
 )
 

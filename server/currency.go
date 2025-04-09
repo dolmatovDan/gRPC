@@ -8,6 +8,8 @@ import (
 	"github.com/dolmatovDan/gRPC/currency"
 	"github.com/dolmatovDan/gRPC/data"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/hashicorp/go-hclog"
 )
@@ -21,6 +23,22 @@ type Currency struct {
 
 func (c *Currency) GetRate(ctx context.Context, rr *currency.RateRequest) (*currency.RateResponse, error) {
 	c.log.Info("Handle GetRate", "base", rr.GetBase(), "destination", rr.GetDestination())
+
+	if rr.Base == rr.Destination {
+		err := status.Newf(
+			codes.InvalidArgument,
+			"Base currency %s can not bet the same as the destination currency %s",
+			rr.Base.String(),
+			rr.Destination.String(),
+		)
+
+		err, wde := err.WithDetails(rr)
+		if wde != nil {
+			return nil, wde
+		}
+
+		return nil, err.Err()
+	}
 
 	rate, err := c.rates.GetRate(rr.GetBase().String(), rr.GetDestination().String())
 	if err != nil {
@@ -39,7 +57,7 @@ func NewCurrency(r *data.ExchangeRates, l hclog.Logger) *Currency {
 
 func (c *Currency) handleUpdates() {
 	ru := c.rates.MonitorRates(5 * time.Second)
-	
+
 	for range ru {
 		c.log.Info("Get updated rates")
 
